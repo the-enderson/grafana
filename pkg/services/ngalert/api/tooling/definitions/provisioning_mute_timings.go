@@ -2,7 +2,7 @@ package definitions
 
 import prometheus "github.com/prometheus/alertmanager/config"
 
-// swagger:route GET /api/provisioning/mute-timings provisioning RouteGetMuteTimings
+// swagger:route GET /api/provisioning/v1/mute-timings provisioning RouteGetMuteTimings
 //
 // Get all the mute timings.
 //
@@ -10,7 +10,7 @@ import prometheus "github.com/prometheus/alertmanager/config"
 //       200: []MuteTiming
 //       400: ValidationError
 
-// swagger:route GET /api/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
+// swagger:route GET /api/provisioning/v1/mute-timings/{name} provisioning RouteGetMuteTiming
 //
 // Get a mute timing.
 //

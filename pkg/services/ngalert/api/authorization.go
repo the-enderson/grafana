@@ -178,20 +178,20 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
-	case http.MethodGet + "/api/provisioning/policies",
-		http.MethodGet + "/api/provisioning/contact-points",
-		http.MethodGet + "/api/provisioning/templates",
-		http.MethodGet + "/api/provisioning/templates/{name}",
-		http.MethodGet + "/api/provisioning/mute-timings",
-		http.MethodGet + "/api/provisioning/mute-timings/{name}":
+	case http.MethodGet + "/api/provisioning/v1/policies",
+		http.MethodGet + "/api/provisioning/v1/contact-points",
+		http.MethodGet + "/api/provisioning/v1/templates",
+		http.MethodGet + "/api/provisioning/v1/templates/{name}",
+		http.MethodGet + "/api/provisioning/v1/mute-timings",
+		http.MethodGet + "/api/provisioning/v1/mute-timings/{name}":
 		return middleware.ReqSignedIn
 
-	case http.MethodPut + "/api/provisioning/policies",
-		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points/{ID}",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
-		http.MethodPut + "/api/provisioning/templates/{name}",
-		http.MethodDelete + "/api/provisioning/templates/{name}":
+	case http.MethodPut + "/api/provisioning/v1/policies",
+		http.MethodPost + "/api/provisioning/v1/contact-points",
+		http.MethodPut + "/api/provisioning/v1/contact-points/{ID}",
+		http.MethodDelete + "/api/provisioning/v1/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/v1/templates/{name}",
+		http.MethodDelete + "/api/provisioning/v1/templates/{name}":
 		return middleware.ReqEditorRole
 	}
 

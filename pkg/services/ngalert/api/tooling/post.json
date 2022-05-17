@@ -3327,14 +3327,14 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3386,17 +3386,14 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3525,7 +3522,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3565,7 +3561,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "description": "Receiver receiver",
@@ -4798,7 +4796,7 @@
     ]
    }
   },
-  "/api/provisioning/contact-points": {
+  "/api/provisioning/v1/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "responses": {
@@ -4851,7 +4849,7 @@
     ]
    }
   },
-  "/api/provisioning/contact-points/{ID}": {
+  "/api/provisioning/v1/contact-points/{ID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -4904,7 +4902,7 @@
     ]
    }
   },
-  "/api/provisioning/mute-timings": {
+  "/api/provisioning/v1/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -4924,7 +4922,7 @@
     ]
    }
   },
-  "/api/provisioning/mute-timings/{name}": {
+  "/api/provisioning/v1/mute-timings/{name}": {
    "get": {
     "operationId": "RouteGetMuteTiming",
     "responses": {
@@ -4944,7 +4942,7 @@
     ]
    }
   },
-  "/api/provisioning/policies": {
+  "/api/provisioning/v1/policies": {
    "get": {
     "operationId": "RouteGetPolicyTree",
     "responses": {
@@ -4997,7 +4995,7 @@
     ]
    }
   },
-  "/api/provisioning/templates": {
+  "/api/provisioning/v1/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5017,7 +5015,7 @@
     ]
    }
   },
-  "/api/provisioning/templates/{name}": {
+  "/api/provisioning/v1/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "responses": {

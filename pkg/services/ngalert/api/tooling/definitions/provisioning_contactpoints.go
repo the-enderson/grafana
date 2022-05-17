@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-// swagger:route GET /api/provisioning/contact-points provisioning RouteGetContactpoints
+// swagger:route GET /api/provisioning/v1/contact-points provisioning RouteGetContactpoints
 //
 // Get all the contact points.
 //
@@ -15,7 +15,7 @@ import (
 //       200: Route
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/contact-points provisioning RoutePostContactpoints
+// swagger:route POST /api/provisioning/v1/contact-points provisioning RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -26,7 +26,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
+// swagger:route PUT /api/provisioning/v1/contact-points/{ID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -37,7 +37,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/contact-points/{ID} provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/provisioning/v1/contact-points/{ID} provisioning RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
