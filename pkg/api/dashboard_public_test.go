@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,10 +13,117 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/query"
+
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
+
+var queryPublicDashboardsInput = `{
+	"from": "",
+	"to": ""
+}`
+
+var queryPublicDashboard = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds"
+          },
+          "exemplar": true,
+          "expr": "query_2_A",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds"
+          },
+          "exemplar": true,
+          "expr": "query_3_A",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
+var queryPublicDashboardMultipleDatasources = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds"
+          },
+          "exemplar": true,
+          "expr": "query_2_A",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "mysqlds"
+          },
+          "exemplar": true,
+          "expr": "query_3_A",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds"
+          },
+          "exemplar": true,
+          "expr": "query_3_B",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
 
 func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
@@ -45,27 +153,27 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	})
 
 	testCases := []struct {
-		name string
-		uid string
-		expectedHttpResponse int
+		name                  string
+		uid                   string
+		expectedHttpResponse  int
 		publicDashboardResult *models.Dashboard
-		publicDashboardErr error
+		publicDashboardErr    error
 	}{
 		{
-			name: "It gets a public dashboard",
-			uid: "pubdash-abcd1234",
+			name:                 "It gets a public dashboard",
+			uid:                  "pubdash-abcd1234",
 			expectedHttpResponse: http.StatusOK,
 			publicDashboardResult: &models.Dashboard{
 				Uid: "dashboard-abcd1234",
 			},
-			publicDashboardErr:nil,
+			publicDashboardErr: nil,
 		},
 		{
-			name: "It should return 404 if isPublicDashboard is false",
-			uid: "pubdash-abcd1234",
-			expectedHttpResponse: http.StatusNotFound,
+			name:                  "It should return 404 if isPublicDashboard is false",
+			uid:                   "pubdash-abcd1234",
+			expectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
-			publicDashboardErr: models.ErrPublicDashboardNotFound,
+			publicDashboardErr:    models.ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -93,8 +201,10 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardResult.Uid, dashResp.Uid)
-			}else{
-				var errResp struct { Error string `json:"error"` }
+			} else {
+				var errResp struct {
+					Error string `json:"error"`
+				}
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardErr.Error(), errResp.Error)
@@ -102,7 +212,6 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		})
 	}
 }
-
 
 func TestAPIGetPublicDashboardConfig(t *testing.T) {
 	pdc := &models.PublicDashboardConfig{IsPublic: true}
@@ -223,4 +332,81 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+// `/public/dashboards/:uid/query`` endpoint test
+func TestAPIQueryPublicDashboard(t *testing.T) {
+	qds := query.ProvideService(
+		nil,
+		&fakeDatasources.FakeCacheService{
+			DataSources: []*models.DataSource{
+				{Uid: "mysqlds"},
+				{Uid: "promds"},
+			},
+		},
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+
+	fakeDashboard, err := simplejson.NewJson([]byte(queryPublicDashboard))
+	require.NoError(t, err)
+
+	fakeDashboardMultipleDatasources, err := simplejson.NewJson([]byte(queryPublicDashboardMultipleDatasources))
+	require.NoError(t, err)
+
+	fakeDashboardService := &dashboards.FakeDashboardService{}
+
+	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, true)
+		hs.dashboardService = fakeDashboardService
+	})
+	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, false)
+		hs.dashboardService = fakeDashboardService
+	})
+
+	t.Run("Status code is 404 when feature toggle is disabled", func(t *testing.T) {
+		req := serverFeatureDisabled.NewPostRequest("/api/public/dashboards/abc123/panels/2/query", strings.NewReader(queryPublicDashboardsInput))
+		resp, err := serverFeatureDisabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("Status code is 200 when feature toggle is enabled", func(t *testing.T) {
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(models.NewDashboardFromJson(fakeDashboard), nil)
+		req := serverFeatureEnabled.NewPostRequest(
+			"/api/public/dashboards/abc123/panels/2/query",
+			strings.NewReader(queryPublicDashboardsInput),
+		)
+		resp, err := serverFeatureEnabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
+		t.Skip("multiple datasources not yet supported")
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(models.NewDashboardFromJson(fakeDashboardMultipleDatasources), nil)
+		req := serverFeatureEnabled.NewPostRequest(
+			"/api/public/dashboards/abc123/panels/2/query",
+			strings.NewReader(queryPublicDashboardsInput),
+		)
+		resp, err := serverFeatureEnabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 }
