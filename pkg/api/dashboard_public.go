@@ -58,7 +58,10 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	dashboard, _ := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	dashboard, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
+	}
 
 	queries := models.GetQueriesFromDashboard(dashboard.Data)
 
