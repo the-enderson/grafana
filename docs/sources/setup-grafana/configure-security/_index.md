@@ -1,12 +1,11 @@
 +++
 aliases = ["/docs/grafana/latest/administration/security/", "/docs/grafana/latest/installation/security/"]
-description = "Security Docs"
-keywords = ["grafana", "security", "documentation"]
-title = "Security"
-weight = 500
+description = "Learn how to make Grafana secure."
+title = "Configure security"
+weight = 600
 +++
 
-# Security
+# Configure security
 
 If you run non-Grafana web services on your Grafana server or within its local network, then they might be vulnerable to exploitation through the Grafana data source proxy or other methods.
 
